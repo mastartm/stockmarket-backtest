@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Strateji Geçmiş Testi</title>
+<meta name="description" content="ABD hisselerinde 'o tarihte alsaydım ne olurdu' sorusunu al-ve-tut ve SMA 50/200 stratejileriyle karşılaştırır. Eğitim amaçlıdır.">
+<style>
+  :root {
+    --bg: #f7f7f5; --card: #ffffff; --text: #1d1d1f; --muted: #66666b; --line: #e2e2dd;
+    --c1: #2a78d6; --c2: #e8590c; --neg: #c92a2a; --pos: #2b8a3e; --accent: #1d1d1f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141416; --card: #1e1e21; --text: #f1f1f3; --muted: #9a9aa3; --line: #34343a;
+      --c1: #5aa2f0; --c2: #ff8a4c; --neg: #ff6b6b; --pos: #5fd07a; --accent: #f1f1f3;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141416; --card: #1e1e21; --text: #f1f1f3; --muted: #9a9aa3; --line: #34343a;
+    --c1: #5aa2f0; --c2: #ff8a4c; --neg: #ff6b6b; --pos: #5fd07a; --accent: #f1f1f3;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 880px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 20px; }
+  .warn { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--c2); border-radius: 8px; padding: 10px 14px; font-size: .9rem; margin-bottom: 20px; }
+  .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  label { display: block; font-size: .8rem; color: var(--muted); margin-bottom: 4px; }
+  select, input { width: 100%; padding: 10px 12px; font: inherit; color: var(--text); background: var(--card); border: 1px solid var(--line); border-radius: 8px; }
+  .summary { font-size: 1.05rem; margin: 0 0 16px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  .card h2 { font-size: .95rem; margin: 0 0 4px; display: flex; align-items: center; gap: 8px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .big { font-size: 1.9rem; font-weight: 700; margin: 0; }
+  .delta { font-weight: 600; margin: 0 0 12px; }
+  .pos { color: var(--pos); } .neg { color: var(--neg); }
+  dl { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: .9rem; }
+  dt { color: var(--muted); } dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+  .chart-box { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-bottom: 20px; }
+  .chart-wrap { position: relative; height: 340px; }
+  details { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; margin-bottom: 12px; }
+  summary { cursor: pointer; font-weight: 600; }
+  details p { margin: 8px 0 0; }
+  footer { color: var(--muted); font-size: .8rem; margin-top: 24px; }
+  #err { display: none; color: var(--neg); }
+  @media (max-width: 520px) { .chart-wrap { height: 280px; } .big { font-size: 1.6rem; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>"Alsaydım ne olurdu?"</h1>
+  <p class="sub">Seçtiğin hissede, seçtiğin dönemde başlangıç parasıyla al-ve-tut ile SMA 50/200 stratejisini karşılaştırır.</p>
+
+  <div class="warn"><strong>Eğitim amaçlıdır, yatırım tavsiyesi değildir.</strong> Geçmiş performans geleceği garanti etmez. Gerçek komisyon, vergi ve kur farkı sonuçları değiştirir.</div>
+
+  <p id="err" role="alert">Veri yüklenemedi. Sayfayı bir web sunucusu üzerinden aç (dosyaya çift tıklamak çalışmaz).</p>
+
+  <div class="controls">
+    <div><label for="ticker">Hisse / ETF</label><select id="ticker"></select></div>
+    <div><label for="period">Dönem</label><select id="period"></select></div>
+    <div><label for="capital">Başlangıç parası (USD)</label><input id="capital" type="number" min="1" step="100" value="1000" inputmode="decimal"></div>
+  </div>
+
+  <p class="summary" id="summary"></p>
+  <div class="cards" id="cards"></div>
+
+  <div class="chart-box"><div class="chart-wrap"><canvas id="chart" aria-label="Portföy değeri grafiği" role="img"></canvas></div></div>
+
+  <details>
+    <summary>SMA 50/200 nedir?</summary>
+    <p>SMA, "basit hareketli ortalama" demektir. 50 günlük SMA son 50 günün ortalama fiyatı, 200 günlük SMA son 200 günün ortalama fiyatıdır.</p>
+    <p>Strateji şunu yapar: 50 günlük ortalama 200 günlük ortalamanın <strong>üstündeyse</strong> hissede kalır, <strong>altındaysa</strong> satıp nakitte bekler. Amaç büyük düşüşlerden kaçınmaktır. Ortalamalar geçmişe baktığı için sinyal geç gelir; bu yüzden strateji çoğu zaman al-ve-tuttan kötü çıkar.</p>
+  </details>
+  <details>
+    <summary>Varsayımlar ve sınırlar</summary>
+    <p>Her alım ve satımda %<span id="cost"></span> maliyet düşülür. Sinyal ertesi gün uygulanır. Temettü dahildir (düzeltilmiş fiyat). Sonuçlar tek bir deneme, tek bir dönemdir; başka dönemde farklı çıkabilir. Kaldıraç, vergi ve TL/USD kuru hesaba katılmaz.</p>
+  </details>
+
+  <footer>Veri: Yahoo Finance, her iş günü otomatik güncellenir. Son güncelleme: <span id="updated">-</span>. Bu sayfada ham fiyat değil, hesaplanmış sonuçlar gösterilir.</footer>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+(function () {
+  var data, chart;
+  var $ = function (id) { return document.getElementById(id); };
+  var usd = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
+  function pct(x) { return x == null ? "—" : (x * 100).toLocaleString("tr-TR", { maximumFractionDigits: 1 }) + "%"; }
+  function signedPct(x) { return (x > 0 ? "+" : "") + pct(x); }
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+  function card(title, color, s, capital) {
+    var scale = capital / data.base;
+    var cls = s.total_return >= 0 ? "pos" : "neg";
+    return '<div class="card"><h2><span class="dot" style="background:' + color + '"></span>' + title + '</h2>' +
+      '<p class="big">' + usd.format(s.final * scale) + '</p>' +
+      '<p class="delta ' + cls + '">' + signedPct(s.total_return) + ' (' + usd.format((s.final - data.base) * scale) + ')</p>' +
+      '<dl><dt>Yıllık getiri</dt><dd>' + pct(s.cagr) + '</dd>' +
+      '<dt>En büyük düşüş</dt><dd>' + pct(s.max_drawdown) + '</dd>' +
+      '<dt>Alım/satım sayısı</dt><dd>' + s.trades + '</dd></dl></div>';
+  }
+
+  function render() {
+    var sym = $("ticker").value, key = $("period").value;
+    var capital = Math.max(1, parseFloat($("capital").value) || 1000);
+    var t = data.tickers[sym], p = t.periods[key];
+    var scale = capital / data.base;
+    var smaName = "SMA " + data.fast + "/" + data.slow;
+
+    $("summary").textContent = p.start + " tarihinde " + usd.format(capital) + " ile " + t.name + " (" + sym + ") alsaydın, " + p.end + " tarihinde al-ve-tut ile " +
+      usd.format(p.stats.bh.final * scale) + ", " + smaName + " ile " + usd.format(p.stats.sma.final * scale) + " olurdu.";
+    $("cards").innerHTML = card("Al-ve-tut", css("--c1"), p.stats.bh, capital) + card(smaName, css("--c2"), p.stats.sma, capital);
+
+    var ds = [
+      { label: "Al-ve-tut", data: p.bh.map(function (v) { return +(v * scale).toFixed(2); }), borderColor: css("--c1"), backgroundColor: css("--c1"), borderWidth: 2, pointRadius: 0, tension: 0.1 },
+      { label: smaName, data: p.sma.map(function (v) { return +(v * scale).toFixed(2); }), borderColor: css("--c2"), backgroundColor: css("--c2"), borderWidth: 2, pointRadius: 0, tension: 0.1 }
+    ];
+    var grid = css("--line"), txt = css("--muted");
+    if (chart) chart.destroy();
+    chart = new Chart($("chart"), {
+      type: "line",
+      data: { labels: p.dates, datasets: ds },
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { labels: { color: txt, usePointStyle: true, boxWidth: 8 } },
+          tooltip: { callbacks: { label: function (c) { return c.dataset.label + ": " + usd.format(c.parsed.y); } } }
+        },
+        scales: {
+          x: { ticks: { color: txt, maxTicksLimit: 6, maxRotation: 0 }, grid: { color: grid } },
+          y: { ticks: { color: txt, callback: function (v) { return usd.format(v); } }, grid: { color: grid } }
+        }
+      }
+    });
+  }
+
+  function fillPeriods() {
+    var sym = $("ticker").value, cur = $("period").value;
+    var periods = data.tickers[sym].periods, keys = Object.keys(periods);
+    $("period").innerHTML = keys.map(function (k) { return '<option value="' + k + '">' + periods[k].label + '</option>'; }).join("");
+    $("period").value = keys.indexOf(cur) >= 0 ? cur : (keys.indexOf("1y") >= 0 ? "1y" : keys[0]);
+  }
+
+  fetch("data/results.json").then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (d) {
+    data = d;
+    $("updated").textContent = d.updated;
+    $("cost").textContent = (d.cost * 100).toLocaleString("tr-TR", { maximumFractionDigits: 2 });
+    var syms = Object.keys(d.tickers);
+    $("ticker").innerHTML = syms.map(function (s) { return '<option value="' + s + '">' + s + " — " + d.tickers[s].name + "</option>"; }).join("");
+    fillPeriods();
+    $("ticker").addEventListener("change", function () { fillPeriods(); render(); });
+    $("period").addEventListener("change", render);
+    $("capital").addEventListener("input", render);
+    if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
+    render();
+  }).catch(function () { $("err").style.display = "block"; });
+})();
+</script>
+</body>
+</html>
