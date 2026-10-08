@@ -14,15 +14,50 @@ import pandas as pd
 import yfinance as yf
 
 TICKERS = {
+    # ETF'ler
     "SPY": "S&P 500 ETF",
+    "VOO": "Vanguard S&P 500 ETF",
     "QQQ": "Nasdaq 100 ETF",
+    "VTI": "Vanguard Toplam ABD Borsası ETF",
+    "DIA": "Dow Jones ETF",
+    "IWM": "Russell 2000 (küçük şirketler) ETF",
+    # Teknoloji
     "AAPL": "Apple",
     "MSFT": "Microsoft",
     "NVDA": "Nvidia",
-    "TSLA": "Tesla",
-    "AMZN": "Amazon",
     "GOOGL": "Alphabet (Google)",
+    "AMZN": "Amazon",
     "META": "Meta",
+    "TSLA": "Tesla",
+    "AVGO": "Broadcom",
+    "AMD": "AMD",
+    "NFLX": "Netflix",
+    "INTC": "Intel",
+    "ORCL": "Oracle",
+    "CRM": "Salesforce",
+    "ADBE": "Adobe",
+    "PLTR": "Palantir",
+    "UBER": "Uber",
+    # Finans
+    "JPM": "JPMorgan Chase",
+    "V": "Visa",
+    "MA": "Mastercard",
+    "BAC": "Bank of America",
+    # Tüketim
+    "WMT": "Walmart",
+    "COST": "Costco",
+    "KO": "Coca-Cola",
+    "PEP": "PepsiCo",
+    "MCD": "McDonald's",
+    "NKE": "Nike",
+    "DIS": "Disney",
+    "PG": "Procter & Gamble",
+    # Sağlık, enerji, sanayi
+    "JNJ": "Johnson & Johnson",
+    "UNH": "UnitedHealth",
+    "PFE": "Pfizer",
+    "XOM": "Exxon Mobil",
+    "BA": "Boeing",
 }
 FETCH_START = "2005-01-01"
 FAST, SLOW = 50, 200
