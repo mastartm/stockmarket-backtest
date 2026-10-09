@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Strateji Geçmiş Testi</title>
 <meta name="description" content="ABD hisselerinde 'o tarihte alsaydım ne olurdu' sorusunu al-ve-tut ve SMA 50/200 stratejileriyle karşılaştırır. Eğitim amaçlıdır.">
+<script>
+  // Kayıtlı tema varsa sayfa çizilmeden önce uygula (yanıp sönmeyi önler)
+  try { var saved = localStorage.getItem("theme"); if (saved === "dark" || saved === "light") document.documentElement.setAttribute("data-theme", saved); } catch (e) {}
+</script>
 <style>
   :root {
     --bg: #f7f7f5; --card: #ffffff; --text: #1d1d1f; --muted: #66666b; --line: #e2e2dd;
@@ -26,7 +30,9 @@
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
   main { max-width: 880px; margin: 0 auto; padding: 24px 16px 48px; }
+  .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
   h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  #theme { flex: none; width: auto; padding: 8px 12px; font: inherit; font-size: .9rem; color: var(--text); background: var(--card); border: 1px solid var(--line); border-radius: 8px; cursor: pointer; white-space: nowrap; }
   .sub { color: var(--muted); margin: 0 0 20px; }
   .warn { background: var(--warn-bg); color: var(--warn-text); border: 1px solid var(--neg); border-left: 6px solid var(--neg); border-radius: 8px; padding: 12px 16px; font-size: 1rem; font-weight: 600; margin-bottom: 20px; }
   .warn strong { font-size: 1.05rem; font-weight: 800; }
@@ -55,7 +61,10 @@
 </head>
 <body>
 <main>
-  <h1>"Alsaydım ne olurdu?"</h1>
+  <div class="top">
+    <h1>"Alsaydım ne olurdu?"</h1>
+    <button id="theme" type="button" aria-label="Açık ve koyu tema arasında geçiş yap"></button>
+  </div>
   <p class="sub">Seçtiğin hissede, seçtiğin dönemde başlangıç parasıyla al-ve-tut ile SMA 50/200 stratejisini karşılaştırır.</p>
 
   <div class="warn" role="note"><strong>⚠ Eğitim amaçlıdır, yatırım tavsiyesi değildir.</strong> Geçmiş performans geleceği garanti etmez. Gerçek komisyon, vergi ve kur farkı sonuçları değiştirir.</div>
@@ -95,6 +104,21 @@
   function pct(x) { return x == null ? "—" : (x * 100).toLocaleString("tr-TR", { maximumFractionDigits: 1 }) + "%"; }
   function signedPct(x) { return (x > 0 ? "+" : "") + pct(x); }
   function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+  function isDark() {
+    var t = document.documentElement.getAttribute("data-theme");
+    if (t) return t === "dark";
+    return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  }
+  function updateThemeButton() { $("theme").textContent = isDark() ? "☀ Açık tema" : "🌙 Koyu tema"; }
+  $("theme").addEventListener("click", function () {
+    var next = isDark() ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    try { localStorage.setItem("theme", next); } catch (e) {}
+    updateThemeButton();
+    if (data) render();
+  });
+  updateThemeButton();
 
   function card(title, color, s, capital) {
     var scale = capital / data.base;
@@ -159,7 +183,7 @@
     $("ticker").addEventListener("change", function () { fillPeriods(); render(); });
     $("period").addEventListener("change", render);
     $("capital").addEventListener("input", render);
-    if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
+    if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () { updateThemeButton(); render(); });
     render();
   }).catch(function () { $("err").style.display = "block"; });
 })();
